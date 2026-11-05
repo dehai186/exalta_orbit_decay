@@ -1,0 +1,442 @@
+#!/usr/bin/python
+
+"""
+    STELA script for exalta 3 orbit decay
+
+"""
+import shutil
+import tempfile
+import platform
+import datetime
+import traceback
+
+import subprocess as sp
+import xml.dom.minidom as xml
+
+from sys import exit
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+
+# INTERNAL VARIABLES. Do not change unless you know what you are doing
+__temporaryfile = Path(tempfile.NamedTemporaryFile().name + "stela_tmp_sim.xml")
+__workingfile = Path(tempfile.NamedTemporaryFile().name + "stela_work_sim.xml")
+
+# when this flag is enabled, debug mode is activated
+DEBUG_MODE = False
+
+# STELA_ROOT set during install. 
+STELA_ROOT = Path(r'C:\Stela')
+
+
+class StelaError(Exception):
+    """Exception class specific to running Stela.
+
+    Args:
+        status_code (int): Return code for exit
+        message (str): Message of the exception
+    """
+
+    def __init__(self, status_code, message):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class XMLFile:
+    """Class for XML file manipulation to avoid parsing and rewriting of files on disk over and over.
+
+    Any XML data is accessible using its key as an attribute of the object. This means that no public additional
+    attributes can be set, only keys of the XML file will be accepted.
+
+    Args:
+        filepath (Path): Path to XML file
+    """
+
+    def __init__(self, filepath):
+        # Read the document content
+        try:
+            self._doc = xml.parse(str(filepath))
+        except Exception:
+            raise StelaError(170, f"The file <{filepath}> isn't a valid XML file.")
+
+        self._path = filepath
+
+    def _get_node(self, key):
+        """Retrieve the XML node associated with the key. To get elements from the 'finalState' node, add 'final' in
+        front of the key.
+
+        Args:
+            key (str): Key for which we want the associated node
+
+        Returns:
+            xml.Node: The Node instance associated to the first element found
+        """
+        try:
+
+            # Case of final value
+            key = key.split('final')[1]
+            try:
+                node_list = self._doc.getElementsByTagName("finalState")[0].getElementsByTagName(key)
+            except IndexError:
+                raise StelaError(190, f"The element finalState couldn't be foudn in the XML file.")
+
+        except IndexError:
+            # Regular case
+            node_list = self._doc.getElementsByTagName(key)
+
+        try:
+            node = node_list[0]
+        except IndexError:
+            raise StelaError(40, "Key <" + key + "> not found")
+
+        return node
+
+    def __getattr__(self, item):
+        # Retrieve XML node
+        node = self._get_node(item)
+
+        try:
+            val = float(node.firstChild.nodeValue)
+        except ValueError:
+            raise StelaError(180, f"The value {item} is not a float")
+
+        return val
+
+    def __setattr__(self, key, value):
+        # No public attributes can be set
+        if key.startswith('_') or key in dir(self):
+            super().__setattr__(key, value)
+        else:
+            # Retrieve XML node
+            node = self._get_node(key)
+
+            # Write the data
+            node.firstChild.nodeValue = str(value)
+
+    def write_to_disk(self):
+        """Write the file to disk. To use after all modifications have been performed to avoid read/write issues
+        (mainly script slowdowns)"""
+        with open(self._path, "w") as xml_file:
+            self._doc.writexml(xml_file, encoding="ISO-8859-1")
+
+
+# ######################################## METHODS ########################################
+
+def debug(mess):
+    """Print a debug message if DEBUG_MODE is true
+
+    Args:
+        mess (str): Debug message
+    """
+    if DEBUG_MODE:
+        print(f"DEBUG# {mess}")
+
+
+def copy(src, dest):
+    """Copy source file to its destination
+
+    Args:
+        src (Path): Path to the source
+        dest (Path): Path to the destination
+
+    Raises:
+        StelaError: The source file cannot be found or the destination file is the same as the source.
+
+    """
+    debug(f"copy {src} to {dest}")
+    try:
+        shutil.copy(src, dest)
+
+    except FileNotFoundError:
+        raise StelaError(10, f"File <{src}> not found")
+
+    except shutil.SameFileError:
+        raise StelaError(20, f"Copy destination is the same as the source (<{src}>)")
+
+
+def move_extrapolation_file(src, dest):
+    """Move the XML and TXT extrapolation files.
+
+    Args:
+        src (Path): Path to the source XML file
+        dest (Path): Path to the destination XML file
+
+    Raises:
+        StelaError: The source files cannot be found or the provided paths don't end with .xml
+    """
+    if src.suffix != ".xml":
+        raise StelaError(130, f"The provided source file <{src}> is not an XML file")
+
+    if dest.suffix != ".xml":
+        raise StelaError(140, f"The provided destination file <{dest}> is not an XML file")
+
+    # XML file move
+    try:
+        shutil.move(src, dest)
+    except FileNotFoundError:
+        raise StelaError(150, f"The XML file <{src}> doesn't exist")
+
+    # TXT file move
+    src2 = src.with_suffix('.txt')
+    try:
+        shutil.move(src2, dest.with_suffix('.txt'))
+    except FileNotFoundError:
+        raise StelaError(160, f"The TXT file <{src2}> doesn't exist")
+
+
+def remove_file(filepath, missing_ok=False):
+    """Remove the specified file
+
+    Args:
+        filepath (Path): Path to the file to remove
+        missing_ok (bool): If true, an error when attempting to remove the file will not trigger any exception
+
+    Raises:
+        StelaError: The specified file doesn't exist.
+    """
+    try:
+        filepath.unlink()
+    except FileNotFoundError:
+        if not missing_ok:
+            raise StelaError(30, f"File <{filepath}> doesn't exist")
+
+
+def end(exception=None):
+    """Function that handles the end of the program.
+
+    Args:
+        exception (StelaError):
+    """
+
+    if exception is None:
+        status_code = 0
+        msg = "End prog"
+    else:
+        status_code = exception.status_code
+        msg = str(exception)
+    print(f"END PROG (CR={status_code}) # {msg}")
+    input('Press enter to finish the program...')
+    exit(status_code)
+
+
+def choseprog():
+    """Retrieve the path to the executable file to be executed depending on the platform.
+
+    Returns:
+        Path: Path to the executable
+    """
+    platf = platform.system()
+    if platf == 'Linux':
+        cmd = STELA_ROOT / "bin" / "stela-batch.sh"
+    elif platf == 'Windows':
+        cmd = STELA_ROOT / "bin" / "stela-batch.bat"
+    else:
+        raise StelaError(100, "unknown OS")
+
+    debug(f"PROG : {cmd}")
+    
+    return cmd
+
+
+def extrapolate():
+    """Launch an extrapolation with workingfile"""
+    prog = choseprog() # determines which executable to use based on os
+    
+    args = [str(prog), "-i", str(__workingfile), "-o", str(__temporaryfile)]
+
+    try:
+        sp.run(args, check=True)
+    except sp.CalledProcessError as err:
+        raise StelaError(err.returncode, "Error when launching extrapolation") from err
+
+    # Test if the output file was generated after extrapolation
+    if not __temporaryfile.is_file():
+        raise StelaError(110, "Error when writing output file during launching extrapolation")
+    
+    # Overwrite the working files with the temporary ones
+    move_extrapolation_file(__temporaryfile, __workingfile)
+
+
+def logfile(filename, *mess):
+    """Send message in a logfile, they are automatically separated by ';'
+
+    Args:
+        filename (Path): Path to the log file
+        mess: Elements to log
+    """
+    with open(filename, 'a') as f:
+        msg = ';'.join(map(str, mess))
+        debug(f"IN {filename} > {msg}")
+        msg += '\n'
+        f.write(msg)
+
+
+def run_sim( __origfile , __defaultlogfile):
+
+    
+        try:
+            # Input file
+           
+    
+            # Initialize logfile
+            remove_file(__defaultlogfile, missing_ok=True)
+    
+            # Writing of the header
+            logfile(__defaultlogfile, "# STELA 3.6.1")
+            logfile(__defaultlogfile, "# By <Your name>")
+            logfile(__defaultlogfile, f"# {datetime.datetime.now().ctime()}")
+            logfile(__defaultlogfile, "semiMajorAxis(BULL_IN)", "eccentricity(BULL_IN)", "inclination(BULL_IN)",
+                    "rAAN(BULL_IN)", "argOfPerigee(BULL_IN)", "meanAnomaly(BULL_IN)",
+                    "semiMajorAxis(BULL_OUT)", "eccentricity(BULL_OUT)", "inclination(BULL_OUT)", "rAAN(BULL_OUT)",
+                    "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)")
+    
+            # Copy origin file to work
+            copy(__origfile, __workingfile)
+    
+            print("=========== START ===========")
+    
+    
+                # Uncomment following lines to reduce time execution of script and enable DEBUG_MODE flag
+                # if DEBUG_MODE:
+                #     f = XMLFile(__workingfile)
+                #     f.simulationDuration = 10
+                #     f.write_to_disk()
+    
+                # Launch extrapolation on working file
+            extrapolate()
+    
+                # Load working file
+            f = XMLFile(__workingfile)
+    
+            print( "f is type: ",type(f))
+                # Log information in a file
+            a = f.semiMajorAxis
+            af = f.finalsemiMajorAxis
+            logfile(__defaultlogfile, a, f.eccentricity, f.inclination, f.rAAN, f.argOfPerigee, f.meanAnomaly,
+                        af, f.finaleccentricity, f.finalinclination, f.finalrAAN, f.finalargOfPerigee, f.finalmeanAnomaly)
+    
+            print(f"initial value of semiMajorAxis : {a} m")
+            print(f"final value of semiMajorAxis   : {af} m")
+    
+            # change value
+            #f.semiMajorAxis = a - 1000.
+    
+                # Update XML file
+            f.write_to_disk()
+    
+        except StelaError as err:
+            pass
+            # end(err)
+    
+        except Exception:
+            print(traceback.format_exc())
+            end(StelaError(999, "Unhandled exception"))
+    
+        else:
+            print("=========== END ===========")
+            print(f"Results are available in file : {__defaultlogfile}")
+    
+    
+
+# ######################################## MAIN ########################################
+def main():
+
+
+    __origfile = Path("sim1.xml")
+    __defaultlogfile = Path("sim1-log_file.csv")
+
+    drag_values = (0.016384742, 0.085131969, 0.0507583555)
+
+    print("ExAlta-3 Orbit Decay Assessment")
+
+    current_stage = int(input("Input current stage of mission (1, 2, 3): "))-1
+
+
+    # get dates
+    stage_end_dates = {}
+    for i in range(current_stage, len(drag_values)):
+        end_date = input(f"Enter end date for Stage {i} (yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS): \n").strip()
+
+        if len(end_date) == 10:
+            end_date += "T00:00:00.000"
+        stage_end_dates[i] = end_date
+
+    current_xml_path = __origfile
+
+    tree = ET.parse(current_xml_path)
+    root = tree.getroot()
+    type0_pos_vel = root.find('.//EphemerisManager/initState/bulletin/Type0PosVel')
+
+   
+    for val in type0_pos_vel:
+        val.text = str(input(f"Enter initial {val.tag}: "))
+            
+    tree.write(__origfile, encoding='ISO-8859-1', xml_declaration=True)
+    print(f"Successfully updated initial state and saved to: {__origfile}")
+
+    init_date = datetime.datetime.now().isoformat()
+
+    # loop through each stage
+    for i in range(current_stage, len(drag_values)):
+        print(f"\nProcessing Stage {i}...")
+
+
+        tree = ET.parse(current_xml_path)
+        root = tree.getroot()
+
+        # update drag area
+        drag_area_elem = root.find(".//SpaceObject/dragArea")
+        if drag_area_elem is not None:
+            drag_area_elem.text = str(drag_values[i])
+
+
+        
+        if i > current_stage:
+            final_state_bulletin = root.find(".//EphemerisManager/finalState/bulletin")
+            init_state_elem = root.find(".//EphemerisManager/initState")
+            init_state_bulletin = init_state_elem.find("bulletin")
+
+            if final_state_bulletin and init_state_bulletin:
+                init_state_elem.remove(init_state_bulletin)
+                new_init_bulletin = ET.fromstring(ET.tostring(final_state_bulletin))
+                init_state_elem.append(new_init_bulletin)
+            
+            init_date = root.find(".//EphemerisManager/initState/bulletin/date").text
+
+        
+
+        start_dt = datetime.datetime.fromisoformat(init_date)
+        end_dt = datetime.datetime.fromisoformat(stage_end_dates[i])
+
+        sim_duration = (end_dt - start_dt).days / 365.25
+
+        #this updates sim duration, final date, effective duration of current xml
+        sim_dur_elem = root.find(".//simulationDuration")
+        if sim_dur_elem is not None:
+            sim_dur_elem.text = str(sim_duration)
+
+        final_date_elem = root.find(".//EphemerisManager/finalState/bulletin/date")
+        if final_date_elem is not None:
+            final_date_elem.text = end_dt.isoformat(timespec='milliseconds')
+
+        eff_dur_elem = root.find(".//Integrator/effective_duration")
+        if eff_dur_elem is not None:
+            eff_dur_elem.text = str(sim_duration)
+
+        # Save stage-specific configuration file
+        stage_xml_filename = Path(f"sim_stage_{i}.xml")
+        tree.write(stage_xml_filename, encoding="ISO-8859-1", xml_declaration=True)
+
+        # 4. Run the simulation
+        print(f"Running simulation for Stage {i} using {stage_xml_filename}...")
+        run_sim(stage_xml_filename, __defaultlogfile)
+
+        # Set current XML to this stage's file so the next iteration reads its output finalState
+        current_xml_path = stage_xml_filename
+
+    print("\nAll simulation stages completed successfully.")
+    end()
+
+
+if __name__ == '__main__':
+    main()

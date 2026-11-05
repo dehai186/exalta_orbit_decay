@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<LEOSimulation version="3.6.0">
+	<STELAVersion>3.6.1</STELAVersion>
+	<SpaceObject>
+		<mass unit="kg">4.61255</mass>
+		<dragArea>0.016384742</dragArea>
+		<reflectingArea>0.2827433388</reflectingArea>
+		<reflectivityCoefficient>1.5</reflectivityCoefficient>
+		<VariableDragCoef/>
+		<name>Default Object Name</name>
+	</SpaceObject>
+	<EphemerisManager version="3.0.0">
+		<initState>
+			<bulletin version="3.0.0">
+				<date>2026-10-20T21:56:17.558</date>
+				<Type0PosVel>
+					<frame>CIRF</frame>
+					<nature>MEAN</nature>
+					<apogeeAltitude unit="m">510000.0</apogeeAltitude>
+					<perigeeAltitude unit="m">510000.0</perigeeAltitude>
+					<inclination unit="rad">0.0</inclination>
+					<rAAN unit="rad">0.0</rAAN>
+					<argOfPerigee unit="rad">0.0</argOfPerigee>
+					<meanAnomaly unit="rad">0.0</meanAnomaly>
+				</Type0PosVel>
+			</bulletin>
+		</initState>
+		<finalState>
+			<bulletin version="3.0.0">
+				<date>2027-05-15T21:56:17.558</date>
+				<Type0PosVel>
+					<frame>CIRF</frame>
+					<nature>MEAN</nature>
+					<apogeeAltitude unit="m">505054.2110506287</apogeeAltitude>
+					<perigeeAltitude unit="m">504651.093410545</perigeeAltitude>
+					<inclination unit="rad">2.8733672396777804E-5</inclination>
+					<rAAN unit="rad">0.0416687224745997</rAAN>
+					<argOfPerigee unit="rad">5.377222543292574</argOfPerigee>
+					<meanAnomaly unit="rad">2.190593651126653</meanAnomaly>
+				</Type0PosVel>
+			</bulletin>
+		</finalState>
+	</EphemerisManager>
+	<author>Default Author Name</author>
+	<comment>This is a default comment.</comment>
+	<simulationDuration unit="years">0.5667351129363449</simulationDuration>
+	<spacecraftType>PAYLOAD</spacecraftType>
+	<missionDuration unit="years">10.0</missionDuration>
+	<ephemerisStep unit="s">86400.0</ephemerisStep>
+	<ttMinusUT1 unit="s">69.184</ttMinusUT1>
+	<srpSwitch>true</srpSwitch>
+	<sunSwitch>true</sunSwitch>
+	<moonSwitch>true</moonSwitch>
+	<extrapolationDuration>401</extrapolationDuration>
+	<warningFlag>false</warningFlag>
+	<iterativeMode>false</iterativeMode>
+	<Integrator>
+		<effective_duration unit="years">0.5667351129363449</effective_duration>
+		<LOSCriteria1 version="3.0.0">
+			<status_criteria1>2</status_criteria1>
+		</LOSCriteria1>
+		<LOSCriteria2 version="3.0.0">
+			<status_criteria2>3</status_criteria2>
+		</LOSCriteria2>
+		<LOSCriteria3 version="3.0.0">
+			<status_criteria3>3</status_criteria3>
+		</LOSCriteria3>
+		<LOSCriteria4 version="3.0.0">
+			<status_criteria4>3</status_criteria4>
+		</LOSCriteria4>
+	</Integrator>
+	<atmosModel>NRLMSISE-00</atmosModel>
+	<ConstantEquivalentSolarActivity>
+		<solActType>MEAN_CONSTANT</solActType>
+		<constantAP>15.0</constantAP>
+		<constantF107>136.25196392576237</constantF107>
+	</ConstantEquivalentSolarActivity>
+	<integrationStep unit="s">86400.0</integrationStep>
+	<dragSwitch>true</dragSwitch>
+	<dragQuadPoints>33</dragQuadPoints>
+	<atmosDragRecomputeStep>1</atmosDragRecomputeStep>
+	<srpQuadPoints>11</srpQuadPoints>
+	<reentryAltitude unit="m">120000.0</reentryAltitude>
+	<iterationData>
+		<funcValueAccuracy unit="days">10.0</funcValueAccuracy>
+		<expDuration unit="years">24.75</expDuration>
+		<simMinusExpDuration unit="years">75.25</simMinusExpDuration>
+		<iterationMethod>EccentricOrbit</iterationMethod>
+	</iterationData>
+	<nbIntegrationStepTesseral>5.0</nbIntegrationStepTesseral>
+	<zonalOrder>7</zonalOrder>
+</LEOSimulation>

@@ -1,0 +1,71 @@
+#CNES - STELA VERSION: 3.6.1
+#LEO Simulation Report 
+[ General ]
+ Author : Default Author Name
+ Comment : This is a default comment.
+ Simulation duration : 0.5667351129363449 years
+ Spacecraft type : PAYLOAD
+ Mission duration : 10.0 years
+ Ephemeris step : 86400.0 s
+ Difference between terrestrial and universal time : 69.184 s
+ Integration Step : 86400.0 s
+ Atmospheric drag switch : true
+ Drag quadrature Points : 33
+ Atmospheric Drag Recompute step : 1 steps
+ Solar radiation pressure switch : true
+ Solar radiation pressure quadrature Points : 11
+ Sun switch : true
+ Moon switch : true
+ Earth Zonal switch : true
+ Zonal order : 7
+ Earth Tesseral switch : false
+ Reentry Altitude : 120.0 km
+ 
+[ Space Object ]
+ Mass : 4.61255 kg
+ Drag Area : 0.016384742 m^2
+ Reflecting Area : 0.2827433388 m^2
+ Reflectivity Coefficient : 1.5
+ Drag Coefficent Type : VARIABLE
+ Name : Default Object Name
+ 
+[ Atmospheric Model ]
+ Atmospheric model : MSIS00
+
+[ Solar Activity ]
+ Solar Activity Type : MEAN_CONSTANT
+ AP Constant Equivalent Solar Activity : 15
+ F10.7 Constant Equivalent Solar Activity : 136.25196393
+ 
+[ Initial Bulletin ]
+ Date : 2026-10-20T21:56:17.558
+ Type : Perigee/Apogee
+ Frame : CIRF
+ Nature : MEAN
+ Zp (Perigee altitude) : 510.0 km
+ Za (Apogee altitude) : 510.0 km
+ I (Inclination) : 0.0 deg
+ RAAN (Right Ascension of Ascending Node) : 0.0 deg
+ w (Argument of perigee) : 0.0 deg
+ M (Mean anomaly) :  0.0 deg
+ 
+[ Final Bulletin ]
+ Date : 2027-05-15T21:56:17.558
+ Type : Perigee/Apogee
+ Frame : CIRF
+ Nature : MEAN
+ Zp (Perigee altitude) : 504.651093411 km
+ Za (Apogee altitude) : 505.054211051 km
+ I (Inclination) : 0.00164631816 deg
+ RAAN (Right Ascension of Ascending Node) : 2.3874419355 deg
+ w (Argument of perigee) : 308.092157233 deg
+ M (Mean anomaly) :  125.511770838 deg
+ 
+[ Results ]
+
+ Effective simulation duration : 0.57 years
+ Criterion 1 : NotComputable	(Lifetime under 25.0 years)
+ Criterion 2 : NotApplicable	(No LEO crossing within 100 years)
+ Criterion 3 : NotApplicable	(No GEO crossing between 1 and 100 years)
+ Criterion 4 : NotApplicable	(No GEO crossing within 100 years)
+ 
