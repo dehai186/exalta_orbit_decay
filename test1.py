@@ -271,70 +271,48 @@ def logfile(filename, *mess):
         f.write(msg)
 
 
-def run_sim( __origfile , __defaultlogfile):
+def run_sim( __currentfile , __defaultlogfile):
+    try:
+       
 
-    
-        try:
-            # Input file
-           
-    
-            # Initialize logfile
-            remove_file(__defaultlogfile, missing_ok=True)
-    
-            # Writing of the header
-            logfile(__defaultlogfile, "# STELA 3.6.1")
-            logfile(__defaultlogfile, "# By <Your name>")
-            logfile(__defaultlogfile, f"# {datetime.datetime.now().ctime()}")
-            logfile(__defaultlogfile, "semiMajorAxis(BULL_IN)", "eccentricity(BULL_IN)", "inclination(BULL_IN)",
-                    "rAAN(BULL_IN)", "argOfPerigee(BULL_IN)", "meanAnomaly(BULL_IN)",
-                    "semiMajorAxis(BULL_OUT)", "eccentricity(BULL_OUT)", "inclination(BULL_OUT)", "rAAN(BULL_OUT)",
-                    "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)")
-    
-            # Copy origin file to work
-            copy(__origfile, __workingfile)
-    
-            print("=========== START ===========")
-    
-    
-                # Uncomment following lines to reduce time execution of script and enable DEBUG_MODE flag
-                # if DEBUG_MODE:
-                #     f = XMLFile(__workingfile)
-                #     f.simulationDuration = 10
-                #     f.write_to_disk()
-    
-                # Launch extrapolation on working file
-            extrapolate()
-    
-                # Load working file
-            f = XMLFile(__workingfile)
-    
-            print( "f is type: ",type(f))
-                # Log information in a file
-            a = f.semiMajorAxis
-            af = f.finalsemiMajorAxis
-            logfile(__defaultlogfile, a, f.eccentricity, f.inclination, f.rAAN, f.argOfPerigee, f.meanAnomaly,
-                        af, f.finaleccentricity, f.finalinclination, f.finalrAAN, f.finalargOfPerigee, f.finalmeanAnomaly)
-    
-            print(f"initial value of semiMajorAxis : {a} m")
-            print(f"final value of semiMajorAxis   : {af} m")
-    
-            # change value
-            #f.semiMajorAxis = a - 1000.
-    
-                # Update XML file
-            f.write_to_disk()
-    
-        except StelaError as err:
-            pass
-            # end(err)
-    
-        except Exception:
-            print(traceback.format_exc())
-            end(StelaError(999, "Unhandled exception"))
-    
-        else:
-            print("=========== END ===========")
-            print(f"Results are available in file : {__defaultlogfile}")
+        print("=========== START ===========")
+        
+        # Uncomment following lines to reduce time execution of script and enable DEBUG_MODE flag
+        # if DEBUG_MODE:
+        #     f = XMLFile(__workingfile)
+        #     f.simulationDuration = 10
+        #     f.write_to_disk()
+
+        # Launch extrapolation on working file
+        extrapolate()
+
+        # Load working file
+        f = XMLFile(__workingfile)
+
+        # Log information in a file
+        a = f.semiMajorAxis
+        af = f.finalsemiMajorAxis
+
+        print(f"initial value of semiMajorAxis : {a} m")
+        print(f"final value of semiMajorAxis   : {af} m")
+
+       
+
+        # Update XML file
+        f.write_to_disk()
+
+    except StelaError as err:
+        end(err)
+
+    except Exception:
+        print(traceback.format_exc())
+        end(StelaError(999, "Unhandled exception"))
+
+    else:
+        print("=========== END ===========")
+        print(f"Results are available in file : {__defaultlogfile}")
+
+        end()
     
     
 
@@ -342,10 +320,10 @@ def run_sim( __origfile , __defaultlogfile):
 def main():
 
 
-    __origfile = Path("sim1.xml")
+    __currentfile = Path("sim1.xml")
     __defaultlogfile = Path("sim1-log_file.csv")
 
-    drag_values = (0.016384742, 0.085131969, 0.0507583555)
+    drag_values = ('0.016384742', '0.085131969', '0.0507583555')
 
     print("ExAlta-3 Orbit Decay Assessment")
 
@@ -361,18 +339,22 @@ def main():
             end_date += "T00:00:00.000"
         stage_end_dates[i] = end_date
 
-    current_xml_path = __origfile
+    current_xml_path = __currentfile
 
     tree = ET.parse(current_xml_path)
     root = tree.getroot()
     type0_pos_vel = root.find('.//EphemerisManager/initState/bulletin/Type0PosVel')
 
-   
+
+   # input inital parameters
     for val in type0_pos_vel:
         val.text = str(input(f"Enter initial {val.tag}: "))
-            
-    tree.write(__origfile, encoding='ISO-8859-1', xml_declaration=True)
-    print(f"Successfully updated initial state and saved to: {__origfile}")
+
+    # write changes
+    tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
+    print(f"Successfully updated initial state and saved to: {__currentfile}")
+
+
 
     init_date = datetime.datetime.now().isoformat()
 
