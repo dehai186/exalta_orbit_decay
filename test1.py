@@ -275,6 +275,8 @@ def logfile(filename, *mess):
 
 
 def run_sim( __defaultlogfile):
+
+    # uses __workingfile
     try:
        
 
@@ -364,10 +366,11 @@ def main():
     init_date = datetime.datetime.now().isoformat()
 
 
-    # loop through each stage
+    # ===================== loop ======================
     for i in range(current_stage, len(drag_values)):
-        print(f"\nProcessing Stage {i}...")
 
+        print(f"\nProcessing Stage {i}...")
+        copy(__currentfile, __workingfile)
 
         # update drag area
         tree = ET.parse(current_xml_path)
@@ -394,22 +397,27 @@ def main():
                 pos.find("argOfPerigee").text = str(f.finalargOfPerigee)
                 pos.find("meanAnomaly").text = str(f.finalmeanAnomaly)
 
+                tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
+
             except AttributeError as e:
                 print("Tag not found: ", e)
             
-            init_date = root.find(".//EphemerisManager/initState/bulletin/date").text
+            init_date = bulletin.find("date").text
 
         
 
         start_dt = datetime.datetime.fromisoformat(init_date)
         end_dt = datetime.datetime.fromisoformat(stage_end_dates[i])
-
+        
         sim_duration = (end_dt - start_dt).days / 365.25
+        print(start_dt, end_date, sim_duration)
 
         #this updates sim duration of current xml
         sim_dur_elem = root.find(".//simulationDuration")
         if sim_dur_elem is not None:
             sim_dur_elem.text = str(sim_duration)
+        else: 
+            print("Sim dur not found")
 
 
         # making next file
@@ -418,9 +426,10 @@ def main():
 
 
         # run the simulation
-        print(f"Running simulation for Stage {i} using {stage_xml_filename}...")
+        print(f"Running simulation for Stage {i} using {__workingfile}...")
         f = run_sim( __defaultlogfile)
 
+        # copy(stage_xml_filename, __workingfile)
 
         current_xml_path = stage_xml_filename
 
