@@ -25,24 +25,9 @@
 				</Type0PosVel>
 			</bulletin>
 		</initState>
-		<finalState>
-			<bulletin version="3.0.0">
-				<date>2028-04-20T18:56:17.558</date>
-				<Type0PosVel>
-					<frame>CIRF</frame>
-					<nature>MEAN</nature>
-					<apogeeAltitude unit="m">590445.793893191</apogeeAltitude>
-					<perigeeAltitude unit="m">583599.8028339604</perigeeAltitude>
-					<inclination unit="rad">1.704385165176897</inclination>
-					<rAAN unit="rad">3.04346076267177</rAAN>
-					<argOfPerigee unit="rad">2.8740824443067217</argOfPerigee>
-					<meanAnomaly unit="rad">2.300914595875186</meanAnomaly>
-				</Type0PosVel>
-			</bulletin>
-		</finalState>
 	</EphemerisManager>
 	<author>Default Author Name</author>
-	<comment>replicate stage 1, high mass, high alt</comment>
+	<comment>Comment</comment>
 	<simulationDuration unit="years">1.5</simulationDuration>
 	<spacecraftType>PAYLOAD</spacecraftType>
 	<missionDuration unit="years">10.0</missionDuration>
@@ -54,21 +39,6 @@
 	<extrapolationDuration>727</extrapolationDuration>
 	<warningFlag>false</warningFlag>
 	<iterativeMode>false</iterativeMode>
-	<Integrator>
-		<effective_duration unit="years">1.5</effective_duration>
-		<LOSCriteria1 version="3.0.0">
-			<status_criteria1>2</status_criteria1>
-		</LOSCriteria1>
-		<LOSCriteria2 version="3.0.0">
-			<status_criteria2>3</status_criteria2>
-		</LOSCriteria2>
-		<LOSCriteria3 version="3.0.0">
-			<status_criteria3>3</status_criteria3>
-		</LOSCriteria3>
-		<LOSCriteria4 version="3.0.0">
-			<status_criteria4>3</status_criteria4>
-		</LOSCriteria4>
-	</Integrator>
 	<atmosModel>NRLMSISE-00</atmosModel>
 	<ConstantEquivalentSolarActivity>
 		<solActType>MEAN_CONSTANT</solActType>

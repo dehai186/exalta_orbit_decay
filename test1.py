@@ -98,7 +98,10 @@ class XMLFile:
         try:
             val = float(node.firstChild.nodeValue)
         except ValueError:
-            raise StelaError(180, f"The value {item} is not a float")
+            print(f"{item} is not a float. Converting to String")
+            val = str(node.firstChild.nodeValue)
+        except:
+            raise StelaError(180, f"Error on getting {item}")
 
         return val
 
@@ -271,35 +274,26 @@ def logfile(filename, *mess):
         f.write(msg)
 
 
-def run_sim( __currentfile , __defaultlogfile):
+def run_sim( __defaultlogfile):
     try:
        
 
         print("=========== START ===========")
         
-        # Uncomment following lines to reduce time execution of script and enable DEBUG_MODE flag
-        # if DEBUG_MODE:
-        #     f = XMLFile(__workingfile)
-        #     f.simulationDuration = 10
-        #     f.write_to_disk()
-
-        # Launch extrapolation on working file
+       
         extrapolate()
 
         # Load working file
         f = XMLFile(__workingfile)
 
-        # Log information in a file
-        a = f.semiMajorAxis
-        af = f.finalsemiMajorAxis
 
-        print(f"initial value of semiMajorAxis : {a} m")
-        print(f"final value of semiMajorAxis   : {af} m")
-
+        logfile(__defaultlogfile, f.apogeeAltitude, f.perigeeAltitude, f.inclination, f.rAAN, f.argOfPerigee, f.meanAnomaly,
+                f.finalapogeeAltitude, f.finalperigeeAltitude, f.finalinclination, f.finalrAAN, f.finalargOfPerigee, f.finalmeanAnomaly, f.finaldate)
        
 
         # Update XML file
         f.write_to_disk()
+
 
     except StelaError as err:
         end(err)
@@ -312,7 +306,7 @@ def run_sim( __currentfile , __defaultlogfile):
         print("=========== END ===========")
         print(f"Results are available in file : {__defaultlogfile}")
 
-        end()
+        return f
     
     
 
@@ -321,7 +315,18 @@ def main():
 
 
     __currentfile = Path("sim1.xml")
-    __defaultlogfile = Path("sim1-log_file.csv")
+    copy(__currentfile, __workingfile)
+
+    __defaultlogfile = Path("log_file.csv")
+    remove_file(__defaultlogfile, missing_ok=True)
+
+    logfile(__defaultlogfile, "# STELA Sim")
+    logfile(__defaultlogfile, "# By <Your name>")
+    logfile(__defaultlogfile, f"# {datetime.datetime.now().ctime()}")
+    logfile(__defaultlogfile, "apogeeAltitude(BULL_IN)","perigeeAltitude(BULL_IN)",  "inclination(BULL_IN)",
+        "rAAN(BULL_IN)", "argOfPerigee(BULL_IN)", "meanAnomaly(BULL_IN)",
+        "apogeeAltitude(BULL_OUT)", "perigeeAltitude(BULL_OUT)", "inclination(BULL_OUT)", "rAAN(BULL_OUT)",
+        "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)")
 
     drag_values = ('0.016384742', '0.085131969', '0.0507583555')
 
@@ -358,15 +363,15 @@ def main():
 
     init_date = datetime.datetime.now().isoformat()
 
+
     # loop through each stage
     for i in range(current_stage, len(drag_values)):
         print(f"\nProcessing Stage {i}...")
 
 
+        # update drag area
         tree = ET.parse(current_xml_path)
         root = tree.getroot()
-
-        # update drag area
         drag_area_elem = root.find(".//SpaceObject/dragArea")
         if drag_area_elem is not None:
             drag_area_elem.text = str(drag_values[i])
@@ -374,14 +379,23 @@ def main():
 
         
         if i > current_stage:
-            final_state_bulletin = root.find(".//EphemerisManager/finalState/bulletin")
+            
             init_state_elem = root.find(".//EphemerisManager/initState")
-            init_state_bulletin = init_state_elem.find("bulletin")
+            bulletin = init_state_elem.find("bulletin")
+            pos = bulletin.find("Type0PosVel")
+            
+            try:
+                bulletin.find("date").text = str(f.finaldate)
 
-            if final_state_bulletin and init_state_bulletin:
-                init_state_elem.remove(init_state_bulletin)
-                new_init_bulletin = ET.fromstring(ET.tostring(final_state_bulletin))
-                init_state_elem.append(new_init_bulletin)
+                pos.find("apogeeAltitude").text = str(f.finalapogeeAltitude)
+                pos.find("perigeeAltitude").text = str(f.finalperigeeAltitude)
+                pos.find("inclination").text = str(f.finalinclination)
+                pos.find("rAAN").text = str(f.finalrAAN)
+                pos.find("argOfPerigee").text = str(f.finalargOfPerigee)
+                pos.find("meanAnomaly").text = str(f.finalmeanAnomaly)
+
+            except AttributeError as e:
+                print("Tag not found: ", e)
             
             init_date = root.find(".//EphemerisManager/initState/bulletin/date").text
 
@@ -392,28 +406,22 @@ def main():
 
         sim_duration = (end_dt - start_dt).days / 365.25
 
-        #this updates sim duration, final date, effective duration of current xml
+        #this updates sim duration of current xml
         sim_dur_elem = root.find(".//simulationDuration")
         if sim_dur_elem is not None:
             sim_dur_elem.text = str(sim_duration)
 
-        final_date_elem = root.find(".//EphemerisManager/finalState/bulletin/date")
-        if final_date_elem is not None:
-            final_date_elem.text = end_dt.isoformat(timespec='milliseconds')
 
-        eff_dur_elem = root.find(".//Integrator/effective_duration")
-        if eff_dur_elem is not None:
-            eff_dur_elem.text = str(sim_duration)
-
-        # Save stage-specific configuration file
+        # making next file
         stage_xml_filename = Path(f"sim_stage_{i}.xml")
         tree.write(stage_xml_filename, encoding="ISO-8859-1", xml_declaration=True)
 
-        # 4. Run the simulation
-        print(f"Running simulation for Stage {i} using {stage_xml_filename}...")
-        run_sim(stage_xml_filename, __defaultlogfile)
 
-        # Set current XML to this stage's file so the next iteration reads its output finalState
+        # run the simulation
+        print(f"Running simulation for Stage {i} using {stage_xml_filename}...")
+        f = run_sim( __defaultlogfile)
+
+
         current_xml_path = stage_xml_filename
 
     print("\nAll simulation stages completed successfully.")
