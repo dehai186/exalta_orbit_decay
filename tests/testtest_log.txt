@@ -1,7 +1,0 @@
-#CNES - STELA VERSION: 3.6.1
-05/11/2026 18:00:23,970 - INFO  - Initialization of STELA with configuration Java HotSpot(TM) 64-Bit Server VM 26.0.2
-05/11/2026 18:00:35,714 - INFO  - LEO simulation 'stage1_hmass_halt_sim.xml' loaded
-05/11/2026 20:35:45,826 - INFO  - New LEO simulation created
-05/11/2026 20:38:36,865 - INFO  - Mean constant solar activity : F10.7 = 136.25, AP = 15
-05/11/2026 20:38:37,013 - INFO  - Start extrapolating
-05/11/2026 20:38:37,413 - INFO  - Extrapolation ends after 0 seconds

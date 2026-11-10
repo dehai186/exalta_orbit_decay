@@ -338,8 +338,8 @@ def main():
 
 
     # get dates
-    stage_end_dates = {}
-    for i in range(current_stage, len(drag_values)+1):
+    stage_end_dates = {3:"2050-01-01T00:00:00.000"}
+    for i in range(current_stage, len(drag_values)):
         end_date = input(f"Enter end date for Stage {i} (yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS): \n").strip()
 
         if len(end_date) == 10:
