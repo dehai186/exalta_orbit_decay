@@ -328,7 +328,7 @@ def main():
     logfile(__defaultlogfile, "apogeeAltitude(BULL_IN)","perigeeAltitude(BULL_IN)",  "inclination(BULL_IN)",
         "rAAN(BULL_IN)", "argOfPerigee(BULL_IN)", "meanAnomaly(BULL_IN)",
         "apogeeAltitude(BULL_OUT)", "perigeeAltitude(BULL_OUT)", "inclination(BULL_OUT)", "rAAN(BULL_OUT)",
-        "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)")
+        "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)", "finishDate(BULL_OUT)")
 
     drag_values = ('0.016384742', '0.085131969', '0.0507583555')
 
