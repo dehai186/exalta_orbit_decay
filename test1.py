@@ -98,7 +98,10 @@ class XMLFile:
         try:
             val = float(node.firstChild.nodeValue)
         except ValueError:
-            raise StelaError(180, f"The value {item} is not a float")
+            print(f"{item} is not a float. Converting to String")
+            val = str(node.firstChild.nodeValue)
+        except:
+            raise StelaError(180, f"Error on getting {item}")
 
         return val
 
@@ -271,35 +274,28 @@ def logfile(filename, *mess):
         f.write(msg)
 
 
-def run_sim( __currentfile , __defaultlogfile):
+def run_sim( __defaultlogfile):
+
+    # uses __workingfile
     try:
        
 
         print("=========== START ===========")
         
-        # Uncomment following lines to reduce time execution of script and enable DEBUG_MODE flag
-        # if DEBUG_MODE:
-        #     f = XMLFile(__workingfile)
-        #     f.simulationDuration = 10
-        #     f.write_to_disk()
-
-        # Launch extrapolation on working file
+       
         extrapolate()
 
         # Load working file
         f = XMLFile(__workingfile)
 
-        # Log information in a file
-        a = f.semiMajorAxis
-        af = f.finalsemiMajorAxis
 
-        print(f"initial value of semiMajorAxis : {a} m")
-        print(f"final value of semiMajorAxis   : {af} m")
-
+        logfile(__defaultlogfile, f.apogeeAltitude, f.perigeeAltitude, f.inclination, f.rAAN, f.argOfPerigee, f.meanAnomaly,
+                f.finalapogeeAltitude, f.finalperigeeAltitude, f.finalinclination, f.finalrAAN, f.finalargOfPerigee, f.finalmeanAnomaly, f.finaldate)
        
 
         # Update XML file
         f.write_to_disk()
+
 
     except StelaError as err:
         end(err)
@@ -312,7 +308,7 @@ def run_sim( __currentfile , __defaultlogfile):
         print("=========== END ===========")
         print(f"Results are available in file : {__defaultlogfile}")
 
-        end()
+        return f
     
     
 
@@ -321,27 +317,38 @@ def main():
 
 
     __currentfile = Path("sim1.xml")
-    __defaultlogfile = Path("sim1-log_file.csv")
+
+
+    __defaultlogfile = Path("log_file.csv")
+    remove_file(__defaultlogfile, missing_ok=True)
+
+    logfile(__defaultlogfile, "# STELA Sim")
+    logfile(__defaultlogfile, "# By <Your name>")
+    logfile(__defaultlogfile, f"# {datetime.datetime.now().ctime()}")
+    logfile(__defaultlogfile, "apogeeAltitude(BULL_IN)","perigeeAltitude(BULL_IN)",  "inclination(BULL_IN)",
+        "rAAN(BULL_IN)", "argOfPerigee(BULL_IN)", "meanAnomaly(BULL_IN)",
+        "apogeeAltitude(BULL_OUT)", "perigeeAltitude(BULL_OUT)", "inclination(BULL_OUT)", "rAAN(BULL_OUT)",
+        "argOfPerigee(BULL_OUT)", "meanAnomaly(BULL_OUT)")
 
     drag_values = ('0.016384742', '0.085131969', '0.0507583555')
 
     print("ExAlta-3 Orbit Decay Assessment")
 
-    current_stage = int(input("Input current stage of mission (1, 2, 3): "))-1
+    current_stage = int(input("Input current stage of mission (1, 2, 3): "))
 
 
     # get dates
     stage_end_dates = {}
-    for i in range(current_stage, len(drag_values)):
+    for i in range(current_stage, len(drag_values)+1):
         end_date = input(f"Enter end date for Stage {i} (yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS): \n").strip()
 
         if len(end_date) == 10:
             end_date += "T00:00:00.000"
         stage_end_dates[i] = end_date
 
-    current_xml_path = __currentfile
+    
 
-    tree = ET.parse(current_xml_path)
+    tree = ET.parse(__currentfile)
     root = tree.getroot()
     type0_pos_vel = root.find('.//EphemerisManager/initState/bulletin/Type0PosVel')
 
@@ -349,74 +356,99 @@ def main():
    # input inital parameters
     for val in type0_pos_vel:
         val.text = str(input(f"Enter initial {val.tag}: "))
+    
+    
+    # tree.find('.//initState/bulletin/date').text = str(init_date)
 
-    # write changes
+    # write tree object to xml file
     tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
     print(f"Successfully updated initial state and saved to: {__currentfile}")
 
 
 
+    
+
     init_date = datetime.datetime.now().isoformat()
+    # ===================== loop ==========================================
+    for i in range(current_stage, len(drag_values)+1):
 
-    # loop through each stage
-    for i in range(current_stage, len(drag_values)):
         print(f"\nProcessing Stage {i}...")
+        
 
-
-        tree = ET.parse(current_xml_path)
+        # tree mhmmm
+        tree = ET.parse(__currentfile)
         root = tree.getroot()
 
         # update drag area
         drag_area_elem = root.find(".//SpaceObject/dragArea")
-        if drag_area_elem is not None:
-            drag_area_elem.text = str(drag_values[i])
+        if drag_area_elem is None:
+            raise StelaError(200, "dragArea tag not found in XML (check the path)")
+        
+        drag_area_elem.text = str(drag_values[i-1])
 
 
         
         if i > current_stage:
-            final_state_bulletin = root.find(".//EphemerisManager/finalState/bulletin")
-            init_state_elem = root.find(".//EphemerisManager/initState")
-            init_state_bulletin = init_state_elem.find("bulletin")
-
-            if final_state_bulletin and init_state_bulletin:
-                init_state_elem.remove(init_state_bulletin)
-                new_init_bulletin = ET.fromstring(ET.tostring(final_state_bulletin))
-                init_state_elem.append(new_init_bulletin)
             
-            init_date = root.find(".//EphemerisManager/initState/bulletin/date").text
+            init_state_elem = root.find(".//EphemerisManager/initState")
+            bulletin = init_state_elem.find("bulletin")
+            pos = bulletin.find("Type0PosVel")
+            
+            try:
+                bulletin.find("date").text = str(f.finaldate)
+
+                pos.find("apogeeAltitude").text = str(f.finalapogeeAltitude)
+                pos.find("perigeeAltitude").text = str(f.finalperigeeAltitude)
+                pos.find("inclination").text = str(f.finalinclination)
+                pos.find("rAAN").text = str(f.finalrAAN)
+                pos.find("argOfPerigee").text = str(f.finalargOfPerigee)
+                pos.find("meanAnomaly").text = str(f.finalmeanAnomaly)
+
+                tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
+
+            except AttributeError as e:
+                print("Tag not found: ", e)
+            
+            init_date = bulletin.find("date").text
 
         
 
         start_dt = datetime.datetime.fromisoformat(init_date)
         end_dt = datetime.datetime.fromisoformat(stage_end_dates[i])
-
+        
         sim_duration = (end_dt - start_dt).days / 365.25
+        print(start_dt, end_dt, sim_duration)
 
-        #this updates sim duration, final date, effective duration of current xml
-        sim_dur_elem = root.find(".//simulationDuration")
-        if sim_dur_elem is not None:
-            sim_dur_elem.text = str(sim_duration)
+        print(f"Current XML file: {__currentfile}")
 
-        final_date_elem = root.find(".//EphemerisManager/finalState/bulletin/date")
-        if final_date_elem is not None:
-            final_date_elem.text = end_dt.isoformat(timespec='milliseconds')
+        root.find(".//simulationDuration").text = str(sim_duration)
+        tree.find('.//initState/bulletin/date').text = str(init_date)
+       
+        #write changes to current file
+        tree.write(__currentfile, encoding="ISO-8859-1", xml_declaration=True)
 
-        eff_dur_elem = root.find(".//Integrator/effective_duration")
-        if eff_dur_elem is not None:
-            eff_dur_elem.text = str(sim_duration)
+        
 
-        # Save stage-specific configuration file
+        # run the simulation
+        copy(__currentfile, __workingfile)
+        print(f"Running simulation for Stage {i} using {__currentfile}...")
+        f = run_sim( __defaultlogfile)
+
+        final_dt = datetime.datetime.fromisoformat(f.finaldate)
+        if final_dt < end_dt - datetime.timedelta(days=1):
+            print(f"Simulation ended early on {f.finaldate} (re-entry/decay). Stopping.")
+            break
+
+
+        # make next XML file
         stage_xml_filename = Path(f"sim_stage_{i}.xml")
         tree.write(stage_xml_filename, encoding="ISO-8859-1", xml_declaration=True)
 
-        # 4. Run the simulation
-        print(f"Running simulation for Stage {i} using {stage_xml_filename}...")
-        run_sim(stage_xml_filename, __defaultlogfile)
-
-        # Set current XML to this stage's file so the next iteration reads its output finalState
-        current_xml_path = stage_xml_filename
+        __currentfile = stage_xml_filename
 
     print("\nAll simulation stages completed successfully.")
+
+    print(f"Final date: {f.finaldate}")
     end()
 
 
