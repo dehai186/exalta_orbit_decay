@@ -12,12 +12,12 @@
 	<EphemerisManager version="3.0.0">
 		<initState>
 			<bulletin version="3.0.0">
-				<date>2026-11-10T00:38:46.200997</date>
+				<date>2009-07-29T00:00:00.000</date>
 				<Type0PosVel>
 					<frame>CIRF</frame>
 					<nature>MEAN</nature>
-					<apogeeAltitude unit="m">590000</apogeeAltitude>
-					<perigeeAltitude unit="m">590000</perigeeAltitude>
+					<apogeeAltitude unit="m">0</apogeeAltitude>
+					<perigeeAltitude unit="m">0</perigeeAltitude>
 					<inclination unit="rad">0</inclination>
 					<rAAN unit="rad">0</rAAN>
 					<argOfPerigee unit="rad">0</argOfPerigee>
@@ -28,7 +28,7 @@
 	</EphemerisManager>
 	<author>Default Author Name</author>
 	<comment>Comment</comment>
-	<simulationDuration unit="years">1.5550992470910336</simulationDuration>
+	<simulationDuration unit="years">0</simulationDuration>
 	<spacecraftType>PAYLOAD</spacecraftType>
 	<missionDuration unit="years">10.0</missionDuration>
 	<ephemerisStep unit="s">86400.0</ephemerisStep>
