@@ -3,7 +3,7 @@
 	<STELAVersion>3.6.1</STELAVersion>
 	<SpaceObject>
 		<mass unit="kg">4.61255</mass>
-		<dragArea>0.016384742</dragArea>
+		<dragArea>0.0507583555</dragArea>
 		<reflectingArea>0.2827433388</reflectingArea>
 		<reflectivityCoefficient>1.5</reflectivityCoefficient>
 		<VariableDragCoef />
@@ -12,7 +12,7 @@
 	<EphemerisManager version="3.0.0">
 		<initState>
 			<bulletin version="3.0.0">
-				<date>2026-11-10T02:22:24.387812</date>
+				<date>2026-11-10T02:32:21.477754</date>
 				<Type0PosVel>
 					<frame>CIRF</frame>
 					<nature>MEAN</nature>
@@ -28,7 +28,7 @@
 	</EphemerisManager>
 	<author>Default Author Name</author>
 	<comment>Comment</comment>
-	<simulationDuration unit="years">1.5550992470910336</simulationDuration>
+	<simulationDuration unit="years">23.140314852840522</simulationDuration>
 	<spacecraftType>PAYLOAD</spacecraftType>
 	<missionDuration unit="years">10.0</missionDuration>
 	<ephemerisStep unit="s">86400.0</ephemerisStep>
