@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<LEOSimulation version="3.6.0">
+	<STELAVersion>3.6.1</STELAVersion>
+	<SpaceObject>
+		<mass unit="kg">4.61255</mass>
+		<dragArea>0.016384742</dragArea>
+		<reflectingArea>0.2827433388</reflectingArea>
+		<reflectivityCoefficient>1.5</reflectivityCoefficient>
+		<VariableDragCoef />
+		<name>Ex-Alta 3</name>
+	</SpaceObject>
+	<EphemerisManager version="3.0.0">
+		<initState>
+			<bulletin version="3.0.0">
+				<date>2009-07-29T00:00:00.000</date>
+				<Type0PosVel>
+					<frame>CIRF</frame>
+					<nature>MEAN</nature>
+					<apogeeAltitude unit="m">0</apogeeAltitude>
+					<perigeeAltitude unit="m">0</perigeeAltitude>
+					<inclination unit="rad">0</inclination>
+					<rAAN unit="rad">0</rAAN>
+					<argOfPerigee unit="rad">0</argOfPerigee>
+					<meanAnomaly unit="rad">0</meanAnomaly>
+				</Type0PosVel>
+			</bulletin>
+		</initState>
+	</EphemerisManager>
+	<author>Default Author Name</author>
+	<comment>Comment</comment>
+	<simulationDuration unit="years">0</simulationDuration>
+	<spacecraftType>PAYLOAD</spacecraftType>
+	<missionDuration unit="years">10.0</missionDuration>
+	<ephemerisStep unit="s">86400.0</ephemerisStep>
+	<ttMinusUT1 unit="s">69.184</ttMinusUT1>
+	<srpSwitch>true</srpSwitch>
+	<sunSwitch>true</sunSwitch>
+	<moonSwitch>true</moonSwitch>
+	<extrapolationDuration>727</extrapolationDuration>
+	<warningFlag>false</warningFlag>
+	<iterativeMode>false</iterativeMode>
+	<atmosModel>NRLMSISE-00</atmosModel>
+	<ConstantEquivalentSolarActivity>
+		<solActType>MEAN_CONSTANT</solActType>
+		<constantAP>15.0</constantAP>
+		<constantF107>135.25238090105802</constantF107>
+	</ConstantEquivalentSolarActivity>
+	<integrationStep unit="s">86400.0</integrationStep>
+	<dragSwitch>true</dragSwitch>
+	<dragQuadPoints>33</dragQuadPoints>
+	<atmosDragRecomputeStep>1</atmosDragRecomputeStep>
+	<srpQuadPoints>11</srpQuadPoints>
+	<reentryAltitude unit="m">120000.0</reentryAltitude>
+	<iterationData>
+		<funcValueAccuracy unit="days">10.0</funcValueAccuracy>
+		<expDuration unit="years">24.75</expDuration>
+		<simMinusExpDuration unit="years">75.25</simMinusExpDuration>
+		<iterationMethod>EccentricOrbit</iterationMethod>
+	</iterationData>
+	<nbIntegrationStepTesseral>5.0</nbIntegrationStepTesseral>
+	<zonalOrder>7</zonalOrder>
+</LEOSimulation>

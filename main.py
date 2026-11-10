@@ -358,7 +358,6 @@ def main():
         val.text = str(input(f"Enter initial {val.tag}: "))
     
     
-    # tree.find('.//initState/bulletin/date').text = str(init_date)
 
     # write tree object to xml file
     tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
@@ -369,7 +368,7 @@ def main():
     
 
     init_date = datetime.datetime.now().isoformat()
-    # ===================== loop ==========================================
+    # ===================== loop =======================
     for i in range(current_stage, len(drag_values)+1):
 
         print(f"\nProcessing Stage {i}...")
