@@ -317,7 +317,7 @@ def main():
 
 
     __currentfile = Path("sim1.xml")
-    copy(__currentfile, __workingfile)
+
 
     __defaultlogfile = Path("log_file.csv")
     remove_file(__defaultlogfile, missing_ok=True)
@@ -334,21 +334,21 @@ def main():
 
     print("ExAlta-3 Orbit Decay Assessment")
 
-    current_stage = int(input("Input current stage of mission (1, 2, 3): "))-1
+    current_stage = int(input("Input current stage of mission (1, 2, 3): "))
 
 
     # get dates
     stage_end_dates = {}
-    for i in range(current_stage, len(drag_values)):
+    for i in range(current_stage, len(drag_values)+1):
         end_date = input(f"Enter end date for Stage {i} (yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS): \n").strip()
 
         if len(end_date) == 10:
             end_date += "T00:00:00.000"
         stage_end_dates[i] = end_date
 
-    current_xml_path = __currentfile
+    
 
-    tree = ET.parse(current_xml_path)
+    tree = ET.parse(__currentfile)
     root = tree.getroot()
     type0_pos_vel = root.find('.//EphemerisManager/initState/bulletin/Type0PosVel')
 
@@ -356,28 +356,35 @@ def main():
    # input inital parameters
     for val in type0_pos_vel:
         val.text = str(input(f"Enter initial {val.tag}: "))
+    
+    
+    # tree.find('.//initState/bulletin/date').text = str(init_date)
 
-    # write changes
+    # write tree object to xml file
     tree.write(__currentfile, encoding='ISO-8859-1', xml_declaration=True)
     print(f"Successfully updated initial state and saved to: {__currentfile}")
 
 
 
+    
+
     init_date = datetime.datetime.now().isoformat()
-
-
-    # ===================== loop ======================
-    for i in range(current_stage, len(drag_values)):
+    # ===================== loop ==========================================
+    for i in range(current_stage, len(drag_values)+1):
 
         print(f"\nProcessing Stage {i}...")
-        copy(__currentfile, __workingfile)
+        
+
+        # tree mhmmm
+        tree = ET.parse(__currentfile)
+        root = tree.getroot()
 
         # update drag area
-        tree = ET.parse(current_xml_path)
-        root = tree.getroot()
         drag_area_elem = root.find(".//SpaceObject/dragArea")
-        if drag_area_elem is not None:
-            drag_area_elem.text = str(drag_values[i])
+        if drag_area_elem is None:
+            raise StelaError(200, "dragArea tag not found in XML (check the path)")
+        
+        drag_area_elem.text = str(drag_values[i-1])
 
 
         
@@ -410,30 +417,38 @@ def main():
         end_dt = datetime.datetime.fromisoformat(stage_end_dates[i])
         
         sim_duration = (end_dt - start_dt).days / 365.25
-        print(start_dt, end_date, sim_duration)
+        print(start_dt, end_dt, sim_duration)
 
-        #this updates sim duration of current xml
-        sim_dur_elem = root.find(".//simulationDuration")
-        if sim_dur_elem is not None:
-            sim_dur_elem.text = str(sim_duration)
-        else: 
-            print("Sim dur not found")
+        print(f"Current XML file: {__currentfile}")
+
+        root.find(".//simulationDuration").text = str(sim_duration)
+        tree.find('.//initState/bulletin/date').text = str(init_date)
+       
+        #write changes to current file
+        tree.write(__currentfile, encoding="ISO-8859-1", xml_declaration=True)
+
+        
+
+        # run the simulation
+        copy(__currentfile, __workingfile)
+        print(f"Running simulation for Stage {i} using {__currentfile}...")
+        f = run_sim( __defaultlogfile)
+
+        final_dt = datetime.datetime.fromisoformat(f.finaldate)
+        if final_dt < end_dt - datetime.timedelta(days=1):
+            print(f"Simulation ended early on {f.finaldate} (re-entry/decay). Stopping.")
+            break
 
 
-        # making next file
+        # make next XML file
         stage_xml_filename = Path(f"sim_stage_{i}.xml")
         tree.write(stage_xml_filename, encoding="ISO-8859-1", xml_declaration=True)
 
-
-        # run the simulation
-        print(f"Running simulation for Stage {i} using {__workingfile}...")
-        f = run_sim( __defaultlogfile)
-
-        # copy(stage_xml_filename, __workingfile)
-
-        current_xml_path = stage_xml_filename
+        __currentfile = stage_xml_filename
 
     print("\nAll simulation stages completed successfully.")
+
+    print(f"Final date: {f.finaldate}")
     end()
 
 
